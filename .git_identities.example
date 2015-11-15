@@ -1,0 +1,16 @@
+[identity:personal]
+  name = Connor Atherton
+  email = c.liam.atherton@gmail.com
+
+[identity:work]
+  name = Connor Atherton
+  email = connor@bitnami.com
+
+[personal]
+  /Users/Connor/Repos/Personal
+  /Users/Connor/Repos/ideas/git-identify
+
+[work]
+  /Users/Connor/Repos/Bitnami
+  ~/Repos/Bitnami
+
