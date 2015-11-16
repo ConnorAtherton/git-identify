@@ -1,16 +1,14 @@
-[identity:personal]
-  name = Connor Atherton
-  email = c.liam.atherton@gmail.com
-
 [identity:work]
   name = Connor Atherton
   email = connor@bitnami.com
 
+[identity:personal]
+  name = Connor Atherton
+  email = c.liam.atherton@gmail.com
+
 [personal]
-  /Users/Connor/Repos/Personal
-  /Users/Connor/Repos/ideas/git-identify
+  /Users/Connor/repos/ideas/*
 
 [work]
-  /Users/Connor/Repos/Bitnami
-  ~/Repos/Bitnami
+  /Users/Connor/repos/bitnami/*
 

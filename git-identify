@@ -1,14 +1,11 @@
 #!/bin/bash
 
-# fail if unset vars
-set -ue
-
-# fail if globs aren't expanded
-# shopt -s failglob
+set -u
 
 # git-identify
 #
-# - Directory matches are case sensitive
+# - Directory matches are case insensitive
+#   - Means ~/Repos/personal will match ~/repos/personal
 # - Comments are lines starting with '//'
 # - Globs must start with from the root directory or
 #   from the home directory.
@@ -42,8 +39,9 @@ CURRENT_IDENTITY_ATTRIBUTES=""
 # identity name with all of it's attributes
 CURRENT_IDENTITY_STRING=""
 
-# Store this for later so we don't have to keep in subshells
-CURRENT_DIRECTORY=$(pwd)
+in_git_repo() {
+  git rev-parse --is-inside-work-tree
+}
 
 identity_contains() {
   for key in $@; do
@@ -53,7 +51,6 @@ identity_contains() {
     fi
   done
 
-  echo "We have both keys now"
   return 0
 }
 
@@ -68,20 +65,78 @@ error_if_parsing_identity() {
   fi
 }
 
+# 1 - String - glob for a match rule
 matches_current_directory() {
-  for file in "$1"; do
-    echo "Checking $CURRENT_DIRECTORY == $file"
-    # NOTE: using [[ ]] for the second condition because [ ]
-    # doesn't allow regular expression expansion.
-    if [ -e "$file" ] && [[ $file == $CURRENT_DIRECTORY ]]; then
-      return 0
-    fi
-  done
+  local current_directory=$(pwd | tr '[:upper:]' '[:lower:]')
+  local glob=$(tr '[:upper:]' '[:lower:]' <<<"$1")
+
+  if [[ "$glob" =~ "$current_directory" ]]; then
+    return "$?"
+  fi
 
   return 1
 }
 
-match_identities() {
+# 1 - String - The identity name to match to the current directory
+set_identity() {
+  local git_attributes=''
+  local found=0
+  # Used below as tmp variables
+  local key=''
+  local val=''
+
+  for identity in "${IDENTITIES_LIST[@]}"; do
+    git_attributes=$(echo "$identity" | sed "s/^$1:\(.*\)$/\1/g")
+
+    # TODO: bit hacky. If the string hasn't been modified then
+    # sed failed. We could include this in sed but focused on
+    # having a working version first.
+    if [[ "$git_attributes" != "$identity" ]]; then
+      found=1
+      break
+    fi
+  done
+
+  if [[ "$found" = 0 ]]; then
+    # No identity: return
+    error "No identity $CURRENT_IDENTITY. Did you declare it before writing your file paths?"
+  fi
+
+  while IFS=',' read -ra split_attributes; do
+    for attributes in "${split_attributes[@]}"; do
+      key=$(echo "$attributes" | awk -F "=" '{ print $1 }')
+      val=$(echo "$attributes" | awk -F "=" '{ print $2 }')
+
+      # NOTE: This only works for user config right now but can be extended
+      # by removing the prefix if the key is of the from ([a-z].[a-z]) and
+      # just using the full key directly.
+      git config --local "user.$key" "$val"
+    done
+  done <<< "$git_attributes"
+}
+
+# TODO: change to case and more functions.
+#
+# case "$line" in
+#   # Declaring identities
+#   ^\[identity:[a-z]*\]$) true ;;
+#   # Attribute listings
+#   ^[name|email]=\(.*\)$) true ;;
+#   # Tying paths to identities
+#   ^\[[a-z][A-Z]*\]$) true ;;
+#   # Path listings
+#   ^\([~|/].*\)$) true ;;
+#   # Comments
+#   ^\/\/.*$) true ;;
+#   *) error "Parse error at line $line_number";;
+# esac
+
+main() {
+  if ! in_git_repo >/dev/null; then
+    # Git will display the corrext message if we exit like this
+    exit 1
+  fi
+
   # check if the file exists
   if [[ ! -f $IDENTITIES_FILE ]]; then
     error "Add a ~/.git_identities file"
@@ -90,19 +145,21 @@ match_identities() {
   while IFS='' read -r line || [[ -n "$line" ]]; do
     local identity_name=
 
-    # trim whitespace
-    line=$(echo $line | sed -e 's/[[:blank:]]//g')
+    # - leading whitspace
+    # - trailing whitespace
+    # - empty lines
+    # - lines with only whitespace
+    # - removing space before and after *=*
+    line=$(echo "$line" | sed 's/^ *//; s/ *$//; /^$/d; /^\s*$/d; s/ *= */=/g')
 
     # comment or empty line
     if [[ "$line" =~ ^\/\/.*$ ]] || [[ -z "$line" ]]; then continue; fi
-
-    # echo "> $line"
 
     # [identity:name]
     if [[ "$line" =~ ^\[identity:[a-z]*\]$ ]]; then
       error_if_parsing_identity
 
-      CURRENT_IDENTITY=$(echo $line | sed -e 's/\[identity:\([a-z]*\)\]/\1/')
+      CURRENT_IDENTITY=$(echo "$line" | sed 's/\[identity:\([a-z]*\)\]/\1/')
       CURRENT_IDENTITY_STRING+="$CURRENT_IDENTITY:"
       continue
     fi
@@ -123,7 +180,7 @@ match_identities() {
       # If we have collected both the name and the email here then we
       # are done with this identity
       if current_identity_full; then
-        IDENTITIES_LIST+=( ${CURRENT_IDENTITY_STRING/%?/} )
+        IDENTITIES_LIST+=("${CURRENT_IDENTITY_STRING/%?/}")
 
         # reset everything
         CHECKING_CURRENT_IDENTITY=0
@@ -140,6 +197,7 @@ match_identities() {
     # [identity_name]
     if [[ "$line" =~ ^\[[a-z]*\]$ ]]; then
       error_if_parsing_identity
+
       CURRENT_IDENTITY=$(echo $line | sed -e 's/\[\([a-z]*\)\]/\1/')
       continue
     fi
@@ -147,20 +205,15 @@ match_identities() {
     # /path/to/dir
     if [[ "$line" =~ ^([~|/].*)$ ]]; then
       # We can short circuit if we find the correct path
-      # We expand ~ using readlink
       match=$(echo "$line" | sed -e 's/^\(.*\)$/\1/g')
-      echo "matching a path $match"
+
       if matches_current_directory $match; then
-        echo "we have a match!!!!!"
+        set_identity "$CURRENT_IDENTITY"
       fi
     fi
 
     # No match if we are here
   done < "$IDENTITIES_FILE"
-}
-
-match_identity() {
-  echo "matching identity here"
 }
 
 error() {
@@ -169,6 +222,6 @@ error() {
 }
 
 #
-# Main
+# Run
 #
-match_identities
+main "$@"
