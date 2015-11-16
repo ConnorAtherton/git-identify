@@ -1,13 +1,15 @@
 # git-identify
 
+tl;dr Adds a `git identify` command to set the current repo's config to a pre-configured identity.
+
 Easily configure different git identities on the same machine.
 
 Have you ever added a one line change to a repository and only realized
 after pushing that you've added the commit with the wrong name and email?
 Yeah - me too.
 
-`git-identify` tries to solve those problems by declaring identities and
-their mappings in one place - a `.git_identities` file.
+`git-identify` tries to solve that problem by declaring identities and
+their mappings in one place - a `~/.git_identities` file.
 
 ### To install
 
@@ -15,7 +17,7 @@ their mappings in one place - a `.git_identities` file.
 
 ### Running
 
-To start, create a `~/.git_identities` file that follows the example file below.
+To start, create a `~/.git_identities` file that follows the example below.
 The syntax tries to follow the `.git/config` style where possible.
 
 ```
@@ -29,6 +31,7 @@ The syntax tries to follow the `.git/config` style where possible.
 
 [personal]
   /Users/Connor/repos/ideas/*
+  /Users/Connor/repos/personal/*
 
 [work]
   /Users/Connor/repos/bitnami/*
@@ -36,12 +39,12 @@ The syntax tries to follow the `.git/config` style where possible.
 
 A few key points:
 - Whitespace is not signifcant and is stripped out
-- Identity decleration order doesn't matter
-- The first match always wins.
+- Identity declaration order doesn't matter
+- The first match always wins
 - The globs are case-insensitive (mainly because I was tetsing this with zsh)
 
-When you enter into a project run `git identify` to modify your local git
-configuration accoriding to the config file.
+Enter into a repo and run `git identify` to modify the local git
+configuration according to the matching identity in the `.git_identities` file..
 
 Check your config in the target repo to make sure the identity rules are correct.
 
