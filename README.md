@@ -23,25 +23,25 @@ The syntax tries to follow the `.git/config` style where possible.
 ```
 [identity:work]
   name = Connor Atherton
-  email = connor@bitnami.com
+  email = connor@work.com
 
 [identity:personal]
   name = Connor Atherton
-  email = c.liam.atherton@gmail.com
+  email = connor@personal.com
 
 [personal]
-  /Users/Connor/repos/ideas/*
+  ~/repos/ideas/*
   /Users/Connor/repos/personal/*
 
 [work]
-  /Users/Connor/repos/bitnami/*
+  /Users/Connor/repos/work/*
 ```
 
 A few key points:
 - Whitespace is not signifcant and is stripped out
 - Identity declaration order doesn't matter
 - The first match always wins
-- The globs are case-insensitive (mainly because I was tetsing this with zsh)
+- The globs are case-insensitive (mainly because I was testing this with zsh)
 
 Enter into a repo and run `git identify` to modify the local git
 configuration according to the matching identity in the `.git_identities` file..

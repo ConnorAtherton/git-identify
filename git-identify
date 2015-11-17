@@ -70,6 +70,7 @@ matches_current_directory() {
   local current_directory=$(pwd | tr '[:upper:]' '[:lower:]')
   local glob=$(tr '[:upper:]' '[:lower:]' <<<"$1")
 
+  # TODO: support ~/repos/* globs here
   if [[ "$glob" =~ "$current_directory" ]]; then
     return "$?"
   fi
@@ -114,22 +115,6 @@ set_identity() {
     done
   done <<< "$git_attributes"
 }
-
-# TODO: change to case and more functions.
-#
-# case "$line" in
-#   # Declaring identities
-#   ^\[identity:[a-z]*\]$) true ;;
-#   # Attribute listings
-#   ^[name|email]=\(.*\)$) true ;;
-#   # Tying paths to identities
-#   ^\[[a-z][A-Z]*\]$) true ;;
-#   # Path listings
-#   ^\([~|/].*\)$) true ;;
-#   # Comments
-#   ^\/\/.*$) true ;;
-#   *) error "Parse error at line $line_number";;
-# esac
 
 main() {
   if ! in_git_repo >/dev/null; then
@@ -208,6 +193,7 @@ main() {
       match=$(echo "$line" | sed -e 's/^\(.*\)$/\1/g')
 
       if matches_current_directory $match; then
+        echo "match $CURRENT_IDENTITY"
         set_identity "$CURRENT_IDENTITY"
       fi
     fi
