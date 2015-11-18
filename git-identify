@@ -10,10 +10,6 @@ set -u
 # - Globs must start with from the root directory or
 #   from the home directory.
 
-# Reolving iddenties is greedy. It will pick the first
-# match for a patten regardless if it is used in an
-# identity later on
-
 # The location of the file holding the identities
 IDENTITIES_FILE="${GIT_IDENTITIES:-$HOME/.git_identities}"
 
@@ -61,17 +57,27 @@ current_identity_full() {
 
 error_if_parsing_identity() {
   if [[ "$CHECKING_CURRENT_IDENTITY" = 1 ]]; then
-    error "Malformed .git_identities file: Have you specified a name and a username for each identity?"
+    error "Malformed .git_identities file: Have you specified a name and a username for $CURRENT_IDENTITY?"
   fi
 }
 
+# Tranforms and prints the git identity
+#
+# 1 - the git identity in it's parsed form
+print_identity() {
+  local esc=$(printf '\033')
+  echo -en "$1" | sed "s/.*:name=\(.*\),email=\(.*\)/Committing as $esc[1m\1 <\2>$esc/g"
+}
+
+# Checks to see whether a glob pattern matches our current directory.
+#
 # 1 - String - glob for a match rule
 matches_current_directory() {
   local current_directory=$(pwd | tr '[:upper:]' '[:lower:]')
-  local glob=$(tr '[:upper:]' '[:lower:]' <<<"$1")
+  local glob=$(echo $1 | tr '[:upper:]' '[:lower:]')
 
   # TODO: support ~/repos/* globs here
-  if [[ "$glob" =~ "$current_directory" ]]; then
+  if [[ $glob =~ "$current_directory" ]]; then
     return "$?"
   fi
 
@@ -82,6 +88,7 @@ matches_current_directory() {
 set_identity() {
   local git_attributes=''
   local found=0
+
   # Used below as tmp variables
   local key=''
   local val=''
@@ -89,10 +96,8 @@ set_identity() {
   for identity in "${IDENTITIES_LIST[@]}"; do
     git_attributes=$(echo "$identity" | sed "s/^$1:\(.*\)$/\1/g")
 
-    # TODO: bit hacky. If the string hasn't been modified then
-    # sed failed. We could include this in sed but focused on
-    # having a working version first.
     if [[ "$git_attributes" != "$identity" ]]; then
+      print_identity "$identity"
       found=1
       break
     fi
@@ -192,8 +197,7 @@ main() {
       # We can short circuit if we find the correct path
       match=$(echo "$line" | sed -e 's/^\(.*\)$/\1/g')
 
-      if matches_current_directory $match; then
-        echo "match $CURRENT_IDENTITY"
+      if matches_current_directory "$match"; then
         set_identity "$CURRENT_IDENTITY"
       fi
     fi
@@ -204,7 +208,7 @@ main() {
 
 error() {
   >&2 echo "${1:-'git-identity error'}"
-  exit ${2:1}
+  exit ${2:-1}
 }
 
 #
