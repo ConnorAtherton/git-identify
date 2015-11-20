@@ -76,7 +76,6 @@ matches_current_directory() {
   local current_directory=$(pwd | tr '[:upper:]' '[:lower:]')
   local glob=$(echo $1 | tr '[:upper:]' '[:lower:]')
 
-  # TODO: support ~/repos/* globs here
   if [[ $glob =~ "$current_directory" ]]; then
     return "$?"
   fi
@@ -135,7 +134,7 @@ main() {
   while IFS='' read -r line || [[ -n "$line" ]]; do
     local identity_name=
 
-    # - leading whitspace
+    # - leading whitespace
     # - trailing whitespace
     # - empty lines
     # - lines with only whitespace
@@ -151,6 +150,7 @@ main() {
 
       CURRENT_IDENTITY=$(echo "$line" | sed 's/\[identity:\([a-z]*\)\]/\1/')
       CURRENT_IDENTITY_STRING+="$CURRENT_IDENTITY:"
+      CHECKING_CURRENT_IDENTITY=1
       continue
     fi
 
@@ -195,7 +195,11 @@ main() {
     # /path/to/dir
     if [[ "$line" =~ ^([~|/].*)$ ]]; then
       # We can short circuit if we find the correct path
-      match=$(echo "$line" | sed -e 's/^\(.*\)$/\1/g')
+      match=$(
+        echo "$line" \
+        | sed -e 's/^\(.*\)$/\1/g' \
+        | sed -e "s_^\(~\)\(.*\)_$(echo "$HOME")\2_g"
+      )
 
       if matches_current_directory "$match"; then
         set_identity "$CURRENT_IDENTITY"
@@ -207,7 +211,7 @@ main() {
 }
 
 error() {
-  >&2 echo "${1:-'git-identity error'}"
+  echo "${1:-'git-identity error'}" >&2
   exit ${2:-1}
 }
 

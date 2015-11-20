@@ -8,7 +8,8 @@
 
 [personal]
   /Users/Connor/repos/personal/*
+  ~/repos/ideas/**/*
 
 [work]
-  /Users/Connor/repos/work/*
+  ~/repos/work/
 
