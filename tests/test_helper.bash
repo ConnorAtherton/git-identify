@@ -1,42 +1,44 @@
 #!/bin/bash
 
-TEST_IDENTITIES_BASE="$(pwd)/.git_identities_base"
-TEST_IDENTITIES="$(pwd)/.git_identities"
+TEST_IDENTITIES_BASE="$(pwd)/tests/.git_identities_base"
+TEST_IDENTITIES="$(pwd)/tests/.git_identities"
 TEST_REPOS_DIR="$(pwd)/repos"
+REPOS_TILDE="$(echo $TEST_REPOS_DIR \| sed -e 's_^\($(echo "$HOME")\)\(.*\)_~\2_g')"
 
 setup() {
-  # cp "$TEST_IDENTITIES_BASE" "$TEST_IDENTITIES"
+  cp "$TEST_IDENTITIES_BASE" "$TEST_IDENTITIES"
   mkdir "$TEST_REPOS_DIR"
   export GIT_IDENTITIES="$TEST_IDENTITIES"
 }
 
 teardown() {
-  # rm -f "$TEST_IDENTITIES"
+  rm -f "$TEST_IDENTITIES"
   rm -rf "$TEST_REPOS_DIR"
   unset GIT_IDENTITIES
 }
 
 append_to_file() {
-  echo "$1\n" >> "$TEST_IDENTITIES"
+  echo -e "$1\n" >> "$TEST_IDENTITIES"
 }
 
 # 1 the string contents of the new file
 create_identities_file() {
-  debug "$1"
   rm -f "$TEST_IDENTITIES"
   echo "$1" > "$TEST_IDENTITIES"
 }
 
 # 1 - the name of the identity to add
-# ..2 - The rules to add
+# ..2 - The rules to add relative to TEST_REPOS_DIR
 append_identity_rule() {
-  local $identity = "$1"
+  local identity="$1"
   shift
+
+  debug "appending identity $identity"
 
   append_to_file "[$identity]"
 
-  for rule in "$@"; do
-    append_to_file "  $rule"
+  for rule in "$@" ; do
+    append_to_file "  $TEST_REPOS_DIR/$rule"
   done
 }
 
