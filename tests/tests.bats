@@ -25,19 +25,19 @@ EOF)"
   [ "$status" -eq 0 ]
 }
 
- @test "knows when an identity is incomplete and throws if new identity started" {
-   create_identities_file "$(cat <<EOF
- [identity:test2]
+@test "knows when an identity is incomplete and throws if new identity started" {
+  create_identities_file "$(cat <<EOF
+[identity:test2]
 
- [identity:test]
-   name = Connor Atherton
- EOF)"
+[identity:test]
+  name = Connor Atherton
+EOF)"
 
-   move_to_random_repo
-   run git identify
+  move_to_random_repo
+  run git identify
 
-   [ "$status" -eq 1 ]
- }
+  [ "$status" -eq 1 ]
+}
 
 @test "errors if an identity decleration is left blank" {
   create_identities_file "$(cat <<EOF

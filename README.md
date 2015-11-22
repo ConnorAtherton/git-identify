@@ -47,7 +47,7 @@ The syntax tries to follow the `.git/config` style where possible.
 ```
 
 A few key points:
-- Whitespace is not signifcant and is stripped out
+- Whitespace is not significant and is stripped out
 - Identity declaration order doesn't matter
 - The first match always wins
 - The globs are case-insensitive (mainly because I use zsh)

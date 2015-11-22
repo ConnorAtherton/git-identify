@@ -145,10 +145,10 @@ main() {
     if [[ "$line" =~ ^\/\/.*$ ]] || [[ -z "$line" ]]; then continue; fi
 
     # [identity:name]
-    if [[ "$line" =~ ^\[identity:[a-z]*\]$ ]]; then
+    if [[ "$line" =~ ^\[identity:[a-z0-9]*\]$ ]]; then
       error_if_parsing_identity
 
-      CURRENT_IDENTITY=$(echo "$line" | sed 's/\[identity:\([a-z]*\)\]/\1/')
+      CURRENT_IDENTITY=$(echo "$line" | sed 's/\[identity:\([a-z0-9]*\)\]/\1/')
       CURRENT_IDENTITY_STRING+="$CURRENT_IDENTITY:"
       CHECKING_CURRENT_IDENTITY=1
       continue
@@ -185,10 +185,10 @@ main() {
     fi
 
     # [identity_name]
-    if [[ "$line" =~ ^\[[a-z]*\]$ ]]; then
+    if [[ "$line" =~ ^\[[a-z0-9]*\]$ ]]; then
       error_if_parsing_identity
 
-      CURRENT_IDENTITY=$(echo $line | sed -e 's/\[\([a-z]*\)\]/\1/')
+      CURRENT_IDENTITY=$(echo $line | sed -e 's/\[\([a-z0-9]*\)\]/\1/')
       continue
     fi
 
